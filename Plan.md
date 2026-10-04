@@ -34,12 +34,12 @@ robot-2d-interfaz-web/
 
 ## 3. Esquema de la base de datos
 
-Las tablas que lee la pasarela llevan **nombres fijos** (`db_table`) y forman parte del contrato, así que no dependen de los nombres internos de Django. Cualquier cambio en ellas debe coordinarse con la pasarela.
+El esquema que comparte con la pasarela está definido en [`contratos/base-de-datos.md`](https://github.com/ojgarciab/carrera-robots-autonomos/blob/main/contratos/base-de-datos.md) del repositorio común. Las tablas llevan **nombres fijos** (`db_table`) para no depender de los nombres internos de Django, y cualquier cambio en ellas se acuerda primero en ese contrato. Resumen:
 
 | Tabla | Campos principales | Notas |
 |-------|--------------------|-------|
 | `usuarios` | `id` (UUID), `nombre_usuario` (único), `nombre_visible`, `password` (hash Argon2), `rol` (`admin` \| `usuario`), `activo`, `creado` | Modelo de usuario propio de Django (`AUTH_USER_MODEL`), creado desde la primera migración. El `nombre_visible` es la etiqueta que se ve sobre el robot en la vista de administrador. |
-| `tokens_api` | `id`, `usuario_id`, `tipo` (`rw` \| `ro`), `hash` (SHA-256, único), `pista` (últimos caracteres, para reconocerlo), `caduca`, `revocado`, `creado`, `ultimo_uso` | Como mucho un token vivo de cada tipo por usuario, garantizado con un índice único parcial (`WHERE NOT revocado`). |
+| `tokens_api` | `id`, `usuario_id`, `tipo` (`rw` \| `ro`), `hash` (SHA-256, único), `pista` (últimos caracteres, para reconocerlo), `caduca`, `revocado`, `creado` | Como mucho un token vivo de cada tipo por usuario, garantizado con un índice único parcial (`WHERE NOT revocado`). |
 | `mundos` | `id` (UUID), `nombre`, `robots_permitidos` (array de texto), `testigo_hash`, `testigo_creado`, `ultimo_latido`, `creado` | `ultimo_latido` lo escribe la pasarela; un mundo se considera activo si es reciente (por ejemplo, de menos de 15 s). |
 | `accesos` | `usuario_id`, `mundo_id`, `concedido_por`, `creado` | Clave primaria (`usuario_id`, `mundo_id`). |
 | `historial_carreras` | *(fase posterior)* | El README común lo menciona, pero todavía no hay requisitos. |
@@ -57,7 +57,7 @@ Se envían **dentro de la misma transacción** que el cambio, con `transaction.o
 | `usuario_desactivado` | `usuario_id` | Al desactivar un usuario. Invalida todos sus tokens. |
 | `testigo_revocado` | `mundo_id` | Al regenerar o revocar el testigo de un mundo. |
 
-Se propone hacerlo con **triggers de PostgreSQL** creados en las migraciones: así el aviso sale aunque el cambio se haga por otra vía (por ejemplo, a mano en la base de datos).
+Se hacen con **triggers de PostgreSQL** creados en las migraciones, como fija el contrato: así el aviso sale aunque el cambio se haga por otra vía (por ejemplo, a mano en la base de datos). La carga de cada aviso es el JSON indicado en el contrato.
 
 ## 4. Pantallas
 
@@ -65,7 +65,7 @@ Se propone hacerlo con **triggers de PostgreSQL** creados en las migraciones: as
 |------|-------|-----------|
 | `/entrar`, `/salir` | todos | Inicio y cierre de sesión. |
 | `/` | todos | Mis mundos: nombre, robots permitidos y si está activo. |
-| `/tokens` | todos | Mis tokens: tipo, pista, caducidad y último uso; generar (con caducidad ≤ `TOKEN_API_MAX_DIAS`) y revocar. El token nuevo se muestra una sola vez, con un botón para copiarlo y un aviso claro. |
+| `/tokens` | todos | Mis tokens: tipo, pista, fecha de creación y caducidad; generar (con caducidad ≤ `TOKEN_API_MAX_DIAS`) y revocar. El token nuevo se muestra una sola vez, con un botón para copiarlo y un aviso claro. |
 | `/cuenta` | todos | Cambiar la contraseña. |
 | `/admin/usuarios` | administradores | Listado, alta, rol, activar o desactivar y restablecer la contraseña. |
 | `/admin/mundos` | administradores | Listado con su estado, alta, edición del nombre y de los robots permitidos, y generar, regenerar o revocar el testigo. Al darlo de alta se muestran el UUID y el testigo listos para copiar a `.env` (`MUNDO_…_UUID` y `MUNDO_…_TESTIGO`). |
@@ -84,10 +84,10 @@ No se usa el `/admin` de Django para la gestión diaria: las reglas (un token de
 
 ## 6. Primer administrador
 
-El README común pide "entrar como administrador" en la puesta en marcha, pero aún no dice cómo se crea. Se propone:
+Hay dos formas, las dos ya recogidas en el README, el `compose.yaml` y el `.env.example` del repositorio común:
 
-- Un comando `python manage.py crear_admin`, que se ejecuta con `docker compose exec interfaz …`.
-- Además, de forma opcional, las variables `ADMIN_USUARIO` y `ADMIN_PASSWORD`: si están definidas y no hay ningún administrador, se crea al arrancar. Habría que añadirlas al `compose.yaml` y al `.env.example` del repositorio común.
+- El comando `python manage.py crear_admin`, que pide los datos y se ejecuta con `docker compose exec interfaz python manage.py crear_admin`.
+- Las variables `ADMIN_USUARIO` y `ADMIN_PASSWORD`: si están definidas y no hay ningún administrador, se crea al arrancar. Si ya hay alguno, se ignoran. Se registra un aviso para recordar que conviene vaciarlas.
 
 ## 7. Fases de implementación
 
@@ -99,7 +99,7 @@ El README común pide "entrar como administrador" en la puesta en marcha, pero a
 ### Fase 1 · Esquema y cuentas
 - Modelo de usuario propio y migración inicial con todas las tablas de la sección 3.
 - Inicio y cierre de sesión, cambio de contraseña, comando `crear_admin`.
-- Publicar el esquema (por ejemplo, como SQL generado o documentación) en el repositorio común para la pasarela.
+- Prueba que compara el esquema creado por las migraciones con `contratos/base-de-datos.md` (tablas, columnas, tipos e índice único parcial), para detectar cualquier desviación del contrato.
 
 ### Fase 2 · Tokens de API
 - Generación con prefijo y *hash*, regla de uno por tipo (revoca el anterior), caducidad máxima, revocación y pantalla de "se muestra una sola vez".
@@ -129,12 +129,16 @@ El README común pide "entrar como administrador" en la puesta en marcha, pero a
 
 | Depende de | Qué necesita |
 |------------|--------------|
-| Repositorio común | Directorio `robots/` (ya existe) y, si se aprueba, variables para el primer administrador en `compose.yaml`. |
-| `robot-2d-pasarela` | Escribe `mundos.ultimo_latido` y escucha los `NOTIFY`. Los nombres de las tablas y canales de la sección 3 son el contrato con ella. |
+| Repositorio común | Directorio `robots/`, contrato `contratos/base-de-datos.md` y variables del primer administrador en `compose.yaml`. |
+| `robot-2d-pasarela` | Escribe `mundos.ultimo_latido` y escucha los `NOTIFY` de `contratos/base-de-datos.md`. |
 
-## 9. Preguntas abiertas
+## 9. Decisiones tomadas
 
-1. **Primer administrador:** ¿comando, variables de entorno o las dos cosas?
-2. **Registro de usuarios:** ¿solo los dan de alta los administradores, como dice el README común, o se quiere también una invitación por correo?
-3. **Contraseñas olvidadas:** ¿basta con que un administrador las restablezca, o hace falta recuperación por correo (y por tanto configurar SMTP)?
-4. **Mundo activo:** ¿cuántos segundos sin latido marcan un mundo como parado en esta web? Se propone 15 s.
+- **Esquema y avisos:** los de `contratos/base-de-datos.md`, con triggers de PostgreSQL.
+- **Primer administrador:** comando `crear_admin` y variables `ADMIN_USUARIO`/`ADMIN_PASSWORD`.
+
+## 10. Preguntas abiertas
+
+1. **Registro de usuarios:** ¿solo los dan de alta los administradores, como dice el README común, o se quiere también una invitación por correo?
+2. **Contraseñas olvidadas:** ¿basta con que un administrador las restablezca, o hace falta recuperación por correo (y por tanto configurar SMTP)?
+3. **Mundo activo:** ¿cuántos segundos sin latido marcan un mundo como parado en esta web? Se propone 15 s.

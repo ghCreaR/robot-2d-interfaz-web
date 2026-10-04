@@ -50,6 +50,7 @@ Variables de entorno (ver el [`compose.yaml`](https://github.com/ojgarciab/carre
 | `SESION_WEB_TTL` | `12h` | Duración de la sesión de esta web. No afecta a los tokens de API. |
 | `TOKEN_API_MAX_DIAS` | `7` | Caducidad máxima de los tokens de API. |
 | `ROBOTS_DIR` | — | Directorio con las definiciones de los robots, para elegir los permitidos en cada mundo. |
+| `ADMIN_USUARIO`, `ADMIN_PASSWORD` | *(vacías)* | Si están definidas y no hay ningún administrador, se crea al arrancar. También se puede crear con `python manage.py crear_admin`. |
 
 Escucha en el puerto `8080` del contenedor (publicado en el `8082` en el despliegue local).
 
@@ -57,6 +58,7 @@ Escucha en el puerto `8080` del contenedor (publicado en el `8082` en el desplie
 
 - [Interfaz de gestión](https://github.com/ojgarciab/carrera-robots-autonomos#interfaz-de-gestión), [tokens de API](https://github.com/ojgarciab/carrera-robots-autonomos#tokens-de-api) y [registro de mundos](https://github.com/ojgarciab/carrera-robots-autonomos#registro-de-mundos)
 - [Acceso de los usuarios a los mundos](https://github.com/ojgarciab/carrera-robots-autonomos#acceso-de-los-usuarios-a-los-mundos)
+- [Contrato de la base de datos](https://github.com/ojgarciab/carrera-robots-autonomos/blob/main/contratos/base-de-datos.md): tablas compartidas con la pasarela y avisos `NOTIFY`
 - [Plan de implementación](Plan.md)
 
 ## Licencia
