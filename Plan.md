@@ -34,7 +34,7 @@ robot-2d-interfaz-web/
 
 ## 3. Esquema de la base de datos
 
-El esquema que comparte con la pasarela está definido en [`contratos/base-de-datos.md`](https://github.com/ojgarciab/carrera-robots-autonomos/blob/main/contratos/base-de-datos.md) del repositorio común. Las tablas llevan **nombres fijos** (`db_table`) para no depender de los nombres internos de Django, y cualquier cambio en ellas se acuerda primero en ese contrato. Resumen:
+El esquema que comparte con la pasarela está definido en [`contratos/base-de-datos.md`](https://github.com/ojgarciab/carrera-robots-autonomos/blob/master/contratos/base-de-datos.md) del repositorio común. Las tablas llevan **nombres fijos** (`db_table`) para no depender de los nombres internos de Django, y cualquier cambio en ellas se acuerda primero en ese contrato. Resumen:
 
 | Tabla | Campos principales | Notas |
 |-------|--------------------|-------|

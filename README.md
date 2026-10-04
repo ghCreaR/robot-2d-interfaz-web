@@ -42,7 +42,7 @@ Cuando un cambio afecta a la pasarela (un token revocado, un acceso retirado, un
 
 ## Configuración
 
-Variables de entorno (ver el [`compose.yaml`](https://github.com/ojgarciab/carrera-robots-autonomos/blob/main/compose.yaml) del repositorio común):
+Variables de entorno (ver el [`compose.yaml`](https://github.com/ojgarciab/carrera-robots-autonomos/blob/master/compose.yaml) del repositorio común):
 
 | Variable | Por defecto | Descripción |
 |----------|-------------|-------------|
@@ -58,7 +58,7 @@ Escucha en el puerto `8080` del contenedor (publicado en el `8082` en el desplie
 
 - [Interfaz de gestión](https://github.com/ojgarciab/carrera-robots-autonomos#interfaz-de-gestión), [tokens de API](https://github.com/ojgarciab/carrera-robots-autonomos#tokens-de-api) y [registro de mundos](https://github.com/ojgarciab/carrera-robots-autonomos#registro-de-mundos)
 - [Acceso de los usuarios a los mundos](https://github.com/ojgarciab/carrera-robots-autonomos#acceso-de-los-usuarios-a-los-mundos)
-- [Contrato de la base de datos](https://github.com/ojgarciab/carrera-robots-autonomos/blob/main/contratos/base-de-datos.md): tablas compartidas con la pasarela y avisos `NOTIFY`
+- [Contrato de la base de datos](https://github.com/ojgarciab/carrera-robots-autonomos/blob/master/contratos/base-de-datos.md): tablas compartidas con la pasarela y avisos `NOTIFY`
 - [Plan de implementación](Plan.md)
 
 ## Licencia
