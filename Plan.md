@@ -40,7 +40,7 @@ El esquema que comparte con la pasarela está definido en [`contratos/base-de-da
 |-------|--------------------|-------|
 | `usuarios` | `id` (UUID), `nombre_usuario` (único), `nombre_visible`, `password` (hash Argon2), `rol` (`admin` \| `usuario`), `activo`, `creado` | Modelo de usuario propio de Django (`AUTH_USER_MODEL`), creado desde la primera migración. El `nombre_visible` es la etiqueta que se ve sobre el robot en la vista de administrador. |
 | `tokens_api` | `id`, `usuario_id`, `tipo` (`rw` \| `ro`), `hash` (SHA-256, único), `pista` (últimos caracteres, para reconocerlo), `caduca`, `revocado`, `creado` | Como mucho un token vivo de cada tipo por usuario, garantizado con un índice único parcial (`WHERE NOT revocado`). |
-| `mundos` | `id` (UUID), `nombre`, `robots_permitidos` (array de texto), `testigo_hash`, `testigo_creado`, `ultimo_latido`, `creado` | `ultimo_latido` lo escribe la pasarela; un mundo se considera activo si es reciente (por ejemplo, de menos de 15 s). |
+| `mundos` | `id` (UUID), `nombre`, `robots_permitidos` (array de texto), `testigo_hash`, `testigo_creado`, `ultimo_latido`, `creado` | `ultimo_latido` lo escribe la pasarela; un mundo se considera activo si su último latido es de hace menos de 15 s. |
 | `accesos` | `usuario_id`, `mundo_id`, `concedido_por`, `creado` | Clave primaria (`usuario_id`, `mundo_id`). |
 | `historial_carreras` | *(fase posterior)* | El README común lo menciona, pero todavía no hay requisitos. |
 
@@ -67,7 +67,7 @@ Se hacen con **triggers de PostgreSQL** creados en las migraciones, como fija el
 | `/` | todos | Mis mundos: nombre, robots permitidos y si está activo. |
 | `/tokens` | todos | Mis tokens: tipo, pista, fecha de creación y caducidad; generar (con caducidad ≤ `TOKEN_API_MAX_DIAS`) y revocar. El token nuevo se muestra una sola vez, con un botón para copiarlo y un aviso claro. |
 | `/cuenta` | todos | Cambiar la contraseña. |
-| `/admin/usuarios` | administradores | Listado, alta, rol, activar o desactivar y restablecer la contraseña. |
+| `/admin/usuarios` | administradores | Listado, alta, rol, activar o desactivar y **restablecer la contraseña** (ver la sección 5.1). |
 | `/admin/mundos` | administradores | Listado con su estado, alta, edición del nombre y de los robots permitidos, y generar, regenerar o revocar el testigo. Al darlo de alta se muestran el UUID y el testigo listos para copiar a `.env` (`MUNDO_…_UUID` y `MUNDO_…_TESTIGO`). |
 | `/admin/accesos` | administradores | Tabla de usuarios × mundos para conceder y retirar accesos. |
 
@@ -81,6 +81,14 @@ No se usa el `/admin` de Django para la gestión diaria: las reglas (un token de
 - **Permisos:** un decorador o *mixin* exige el rol de administrador en todas las vistas `/admin/…`.
 - **Secretos:** los tokens y los testigos no se guardan ni se registran nunca en claro.
 - **Cabeceras:** CSP estricta, `X-Frame-Options: DENY` y `Referrer-Policy`.
+
+### 5.1. Contraseñas
+
+No hay correo electrónico ni recuperación automática de contraseñas:
+
+- **Alta de un usuario:** el administrador escribe la contraseña inicial o pide una aleatoria, que se muestra **una sola vez** para que se la comunique al usuario.
+- **Restablecer:** igual que en el alta. Al restablecerla se cierran las sesiones abiertas del usuario en la interfaz; sus tokens de API siguen valiendo, porque no dependen de la contraseña.
+- **Cambiar la contraseña:** cada usuario puede cambiarla cuando quiera en `/cuenta`, escribiendo la actual y la nueva dos veces. Se aplican los validadores de contraseña de Django (longitud mínima y contraseñas demasiado comunes).
 
 ## 6. Primer administrador
 
@@ -112,7 +120,8 @@ Hay dos formas, las dos ya recogidas en el README, el `compose.yaml` y el `.env.
 - *Trigger* `testigo_revocado`.
 
 ### Fase 4 · Usuarios y accesos
-- Gestión de usuarios por los administradores.
+- Gestión de usuarios por los administradores, con el alta y el restablecimiento de contraseñas de la sección 5.1.
+- Pruebas: la contraseña aleatoria se muestra una sola vez; al restablecerla se cierran las sesiones del usuario; el usuario puede cambiarla después.
 - Tabla de accesos.
 - *Triggers* `acceso_retirado` y `usuario_desactivado`.
 - "Mis mundos" filtrado por accesos.
@@ -136,9 +145,10 @@ Hay dos formas, las dos ya recogidas en el README, el `compose.yaml` y el `.env.
 
 - **Esquema y avisos:** los de `contratos/base-de-datos.md`, con triggers de PostgreSQL.
 - **Primer administrador:** comando `crear_admin` y variables `ADMIN_USUARIO`/`ADMIN_PASSWORD`.
+- **Usuarios:** solo los dan de alta los administradores. No hay invitaciones ni correo.
+- **Contraseñas:** los administradores las restablecen y se las comunican a los usuarios, que pueden cambiarlas cuando quieran.
+- **Mundo activo:** si su último latido es de hace menos de 15 s.
 
 ## 10. Preguntas abiertas
 
-1. **Registro de usuarios:** ¿solo los dan de alta los administradores, como dice el README común, o se quiere también una invitación por correo?
-2. **Contraseñas olvidadas:** ¿basta con que un administrador las restablezca, o hace falta recuperación por correo (y por tanto configurar SMTP)?
-3. **Mundo activo:** ¿cuántos segundos sin latido marcan un mundo como parado en esta web? Se propone 15 s.
+Ninguna por ahora.

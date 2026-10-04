@@ -30,11 +30,11 @@ Es además la **dueña del esquema de la base de datos** y de sus migraciones. L
   - El token se muestra **una sola vez** al generarlo; solo se guarda su *hash*.
   - Hay como máximo un token de cada tipo: generar uno nuevo revoca el anterior.
   - Revocar un token en cualquier momento.
-- **Cambiar su contraseña.**
+- **Cambiar su contraseña** cuando quiera.
 
 ### Para los administradores
 
-- **Usuarios:** darlos de alta, asignarles el rol (administrador o usuario) y desactivarlos.
+- **Usuarios:** darlos de alta, asignarles el rol (administrador o usuario), desactivarlos y **restablecer su contraseña**. No hay correo electrónico: el administrador comunica la contraseña al usuario, que puede cambiarla después.
 - **Mundos:** darlos de alta con su nombre y sus robots permitidos (a partir de los modelos de `ROBOTS_DIR`), y **generar, regenerar o revocar su testigo de acceso**, que también se muestra una sola vez.
 - **Accesos:** decidir a qué mundos tiene acceso cada usuario. Un usuario nuevo no tiene acceso a ninguno.
 
